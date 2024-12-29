@@ -2,9 +2,9 @@ terraform {
   # Assumes s3 bucket and dynamo DB table already set up
   # See /code/03-basics/aws-backend
   backend "s3" {
-    bucket         = "devops-directive-tf-state"
+    bucket         = "tobstar-tf-state"
     key            = "03-basics/web-app/terraform.tfstate"
-    region         = "us-east-1"
+    region         = "eu-central-1"
     dynamodb_table = "terraform-state-locking"
     encrypt        = true
   }
@@ -18,11 +18,11 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = "eu-central-1"
 }
 
 resource "aws_instance" "instance_1" {
-  ami             = "ami-011899242bb902164" # Ubuntu 20.04 LTS // us-east-1
+  ami             = "ami-0745b7d4092315796" # Ubuntu 22.04 LTS // eu-central-1
   instance_type   = "t2.micro"
   security_groups = [aws_security_group.instances.name]
   user_data       = <<-EOF
@@ -33,7 +33,7 @@ resource "aws_instance" "instance_1" {
 }
 
 resource "aws_instance" "instance_2" {
-  ami             = "ami-011899242bb902164" # Ubuntu 20.04 LTS // us-east-1
+  ami             = "ami-0745b7d4092315796" # Ubuntu 22.04 LTS // eu-central-1
   instance_type   = "t2.micro"
   security_groups = [aws_security_group.instances.name]
   user_data       = <<-EOF
@@ -44,7 +44,7 @@ resource "aws_instance" "instance_2" {
 }
 
 resource "aws_s3_bucket" "bucket" {
-  bucket_prefix = "devops-directive-web-app-data"
+  bucket_prefix = "tobstar-web-app-data"
   force_destroy = true
 }
 
@@ -186,13 +186,17 @@ resource "aws_lb" "load_balancer" {
 
 }
 
+# resource "aws_route53_zone" "primary" {
+#   name = "devopsdeployed.com"
+# }
+
 resource "aws_route53_zone" "primary" {
-  name = "devopsdeployed.com"
+  name = "aws.tsb.email"
 }
 
 resource "aws_route53_record" "root" {
   zone_id = aws_route53_zone.primary.zone_id
-  name    = "devopsdeployed.com"
+  name    = "web-app.aws.tsb.email"
   type    = "A"
 
   alias {
@@ -209,10 +213,10 @@ resource "aws_db_instance" "db_instance" {
   # upgrade the minor version of your DB. This may be too risky
   # in a real production environment.
   auto_minor_version_upgrade = true
-  storage_type               = "standard"
+  storage_type               = "gp2"
   engine                     = "postgres"
   engine_version             = "12"
-  instance_class             = "db.t2.micro"
+  instance_class             = "db.t4g.micro"
   name                       = "mydb"
   username                   = "foo"
   password                   = "foobarbaz"
